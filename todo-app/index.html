@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Puter To-Do</title>
+<script src="https://js.puter.com/v2/"></script>
+<style>
+  :root { --bg:#f4f5f7; --card:#fff; --text:#1f2430; --muted:#8a90a0; --accent:#4f6ef7; --line:#e6e8ee; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#16181d; --card:#20232b; --text:#e8eaf0; --muted:#8a90a0; --accent:#7b93ff; --line:#2d313b; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.4 system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:16px; }
+  main { width:100%; max-width:560px; margin-top:6vh; }
+  h1 { margin:0 0 16px; font-size:1.6rem; }
+  .card { background:var(--card); border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.08); overflow:hidden; }
+  form { display:flex; border-bottom:1px solid var(--line); }
+  input[type=text] { flex:1; border:0; padding:14px 16px; font-size:1rem; background:transparent; color:inherit; outline:none; }
+  button { font:inherit; cursor:pointer; border:0; background:none; color:inherit; }
+  form button { padding:0 18px; color:#fff; background:var(--accent); }
+  ul { list-style:none; margin:0; padding:0; }
+  li { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--line); }
+  li span { flex:1; word-break:break-word; }
+  li.done span { text-decoration:line-through; color:var(--muted); }
+  li .del { color:var(--muted); font-size:1.2rem; }
+  li .del:hover { color:#e5484d; }
+  .empty { padding:24px; text-align:center; color:var(--muted); }
+  footer.bar { display:flex; justify-content:space-between; align-items:center; padding:10px 16px; font-size:.85rem; color:var(--muted); }
+  .filters button { padding:2px 8px; border-radius:6px; color:var(--muted); }
+  .filters button.on { color:var(--accent); background:rgba(79,110,247,.12); }
+  #user { text-align:right; font-size:.85rem; color:var(--muted); margin-bottom:8px; min-height:1.2em; }
+  #user button { color:var(--accent); }
+  #status { text-align:center; color:var(--muted); font-size:.85rem; margin-top:8px; min-height:1.2em; }
+  .powered { margin-top:auto; padding:24px 0 8px; font-size:.85rem; color:var(--muted); }
+  .powered a { color:var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <div id="user"></div>
+  <h1>To-Do</h1>
+  <div class="card">
+    <form id="add">
+      <input id="text" type="text" placeholder="What needs to be done?" autocomplete="off" maxlength="200" required>
+      <button type="submit">Add</button>
+    </form>
+    <ul id="list"></ul>
+    <footer class="bar">
+      <span id="count"></span>
+      <span class="filters" id="filters">
+        <button data-f="all" class="on">All</button>
+        <button data-f="active">Active</button>
+        <button data-f="done">Done</button>
+      </span>
+      <button id="clear">Clear done</button>
+    </footer>
+  </div>
+  <div id="status"></div>
+</main>
+<div class="powered">Powered by <a href="https://developer.puter.com" target="_blank" rel="noopener">Puter</a></div>
+
+<script>
+const KEY = 'todos';
+let todos = [];
+let filter = 'all';
+
+const $ = id => document.getElementById(id);
+
+function setStatus(msg) { $('status').textContent = msg || ''; }
+
+// Persist to the signed-in user's own Puter key-value store.
+async function save() {
+  try { await puter.kv.set(KEY, JSON.stringify(todos)); setStatus(''); }
+  catch (e) { setStatus('Could not save: ' + (e.message || 'sign in to Puter')); }
+}
+
+async function load() {
+  try {
+    const raw = await puter.kv.get(KEY);
+    todos = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    todos = [];
+    setStatus('Could not load your list: ' + (e.message || 'sign in to Puter'));
+  }
+}
+
+function render() {
+  const shown = todos.filter(t => filter === 'all' || (filter === 'done') === t.done);
+  const list = $('list');
+  list.innerHTML = '';
+  if (!shown.length) {
+    const li = document.createElement('li');
+    li.className = 'empty';
+    li.textContent = todos.length ? 'Nothing here.' : 'No tasks yet. Add one above.';
+    list.appendChild(li);
+  }
+  for (const t of shown) {
+    const li = document.createElement('li');
+    li.className = t.done ? 'done' : '';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.checked = t.done;
+    cb.onchange = () => { t.done = cb.checked; save(); render(); };
+    const span = document.createElement('span');
+    span.textContent = t.text;   // textContent keeps user input from injecting HTML
+    const del = document.createElement('button');
+    del.className = 'del'; del.textContent = '×'; del.setAttribute('aria-label', 'Delete');
+    del.onclick = () => { todos = todos.filter(x => x.id !== t.id); save(); render(); };
+    li.append(cb, span, del);
+    list.appendChild(li);
+  }
+  const left = todos.filter(t => !t.done).length;
+  $('count').textContent = left + (left === 1 ? ' item left' : ' items left');
+  document.querySelectorAll('#filters button').forEach(b => b.classList.toggle('on', b.dataset.f === filter));
+}
+
+$('add').onsubmit = e => {
+  e.preventDefault();
+  const text = $('text').value.trim();
+  if (!text) return;
+  todos.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text, done: false });
+  $('text').value = '';
+  save(); render();
+};
+$('filters').onclick = e => { if (e.target.dataset.f) { filter = e.target.dataset.f; render(); } };
+$('clear').onclick = () => { todos = todos.filter(t => !t.done); save(); render(); };
+
+async function showUser() {
+  const box = $('user');
+  box.textContent = '';
+  try {
+    if (await puter.auth.isSignedIn()) {
+      const u = await puter.auth.getUser();
+      box.append(u.username + ' · ');
+      const b = document.createElement('button');
+      b.textContent = 'Sign out';
+      b.onclick = async () => { await puter.auth.signOut(); todos = []; render(); showUser(); };
+      box.appendChild(b);
+    } else {
+      const b = document.createElement('button');
+      b.textContent = 'Sign in with Puter to sync your list';
+      b.onclick = async () => { await puter.auth.signIn(); await load(); render(); showUser(); };
+      box.appendChild(b);
+    }
+  } catch (e) { /* user label is optional */ }
+}
+
+(async () => { await showUser(); await load(); render(); })();
+</script>
+</body>
+</html>
