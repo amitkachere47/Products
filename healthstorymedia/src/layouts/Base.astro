@@ -1,0 +1,74 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE } from '../site.config';
+
+interface Props {
+  title: string;
+  description: string;
+  image?: string;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+  schema?: Record<string, unknown>[];
+}
+
+const { title, description, image, type = 'website', noindex = false, schema = [] } = Astro.props;
+const canonical = new URL(Astro.url.pathname, SITE.url).href;
+const fullTitle = Astro.url.pathname === '/' ? `${SITE.name} — ${SITE.tagline}` : `${title} | ${SITE.name}`;
+const ogImage = image ? new URL(image, SITE.url).href : undefined;
+const orgSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: SITE.name,
+  url: SITE.url,
+  logo: `${SITE.url}/favicon.svg`,
+};
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json" set:html={JSON.stringify([orgSchema, ...schema])} />
+    {SITE.adsenseClient && (
+      <script is:inline
+        async
+        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${SITE.adsenseClient}`}
+        crossorigin="anonymous"
+      />
+    )}
+    {SITE.gaId && (
+      <>
+        <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${SITE.gaId}`} />
+        <script is:inline define:vars={{ gaId: SITE.gaId }}>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', gaId);
+        </script>
+      </>
+    )}
+  </head>
+  <body>
+    <Header />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

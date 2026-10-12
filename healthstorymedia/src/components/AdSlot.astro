@@ -1,0 +1,14 @@
+---
+import { SITE } from '../site.config';
+// Set a slot ID from AdSense > Ads > By ad unit. Without one, AdSense Auto Ads still fill the page.
+interface Props { slot?: string }
+const { slot } = Astro.props;
+---
+{SITE.adsenseClient && slot ? (
+  <div class="ad-slot">
+    <ins class="adsbygoogle" style="display:block" data-ad-client={SITE.adsenseClient} data-ad-slot={slot} data-ad-format="auto" data-full-width-responsive="true"></ins>
+    <script is:inline>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+) : import.meta.env.DEV ? (
+  <div class="ad-slot ad-placeholder">Ad slot</div>
+) : null}

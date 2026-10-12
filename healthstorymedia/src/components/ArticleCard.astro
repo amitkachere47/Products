@@ -1,0 +1,12 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { CATEGORIES, type CategorySlug } from '../site.config';
+interface Props { article: CollectionEntry<'articles'> }
+const { article } = Astro.props;
+const cat = article.data.category as CategorySlug;
+---
+<article class="card">
+  <a class="tag" href={`/${cat}/`}>{CATEGORIES[cat].name}</a>
+  <a class="title" href={`/${article.id}/`}>{article.data.title}</a>
+  <p>{article.data.description}</p>
+</article>

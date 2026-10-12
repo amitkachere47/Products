@@ -1,0 +1,72 @@
+---
+import Base from '../layouts/Base.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import Newsletter from '../components/Newsletter.astro';
+import { SITE, CATEGORIES, NAV } from '../site.config';
+import { getArticles } from '../lib';
+
+const articles = await getArticles();
+const featured = articles.filter((a) => a.data.featured).slice(0, 6);
+const compare = articles.filter((a) => a.data.category === 'compare').slice(0, 6);
+const stories = articles.filter((a) => a.data.category === 'stories').slice(0, 3);
+const gifts = articles.filter((a) => a.data.category === 'gifts').slice(0, 6);
+const latest = articles.slice(0, 9);
+const goals = [...NAV.filter((s) => !['reviews'].includes(s))];
+---
+<Base title={SITE.name} description={SITE.description}>
+  <section class="hero">
+    <div class="container">
+      <h1>Real Stories. Honest Reviews. Better Health.</h1>
+      <p>Expert-reviewed guides to help you lose weight, sleep better and feel your best.</p>
+      {SITE.promo.enabled ? (
+        <a class="btn btn-accent" href={SITE.promo.href}>{SITE.promo.label}</a>
+      ) : (
+        <a class="btn" href="/free-guide/">Get Our Free Sleep Guide</a>
+      )}
+    </div>
+  </section>
+
+  <section class="section container">
+    <h2>Shop by Goal</h2>
+    <div class="tiles">
+      {goals.map((s) => (
+        <a class="tile" href={`/${s}/`}><strong>{CATEGORIES[s].name}</strong><small>{CATEGORIES[s].blurb}</small></a>
+      ))}
+    </div>
+  </section>
+
+  {featured.length > 0 && (
+    <section class="section container">
+      <h2>Editor's Top Picks</h2>
+      <div class="cards">{featured.map((a) => <ArticleCard article={a} />)}</div>
+    </section>
+  )}
+
+  {gifts.length > 0 && (
+    <section class="section container">
+      <h2>Holiday Gift Guides 🎁</h2>
+      <div class="cards">{gifts.map((a) => <ArticleCard article={a} />)}</div>
+    </section>
+  )}
+
+  {stories.length > 0 && (
+    <section class="section container">
+      <h2>Real Health Stories</h2>
+      <div class="cards">{stories.map((a) => <ArticleCard article={a} />)}</div>
+    </section>
+  )}
+
+  {compare.length > 0 && (
+    <section class="section container">
+      <h2>Popular Comparisons</h2>
+      <div class="cards">{compare.map((a) => <ArticleCard article={a} />)}</div>
+    </section>
+  )}
+
+  <div class="container"><Newsletter /></div>
+
+  <section class="section container">
+    <h2>Latest Articles</h2>
+    <div class="cards">{latest.map((a) => <ArticleCard article={a} />)}</div>
+  </section>
+</Base>

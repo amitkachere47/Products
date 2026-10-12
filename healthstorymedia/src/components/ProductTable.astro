@@ -1,0 +1,23 @@
+---
+import Stars from './Stars.astro';
+interface Props {
+  products: { name: string; bestFor?: string; price?: string; rating?: number; link: string }[];
+}
+const { products } = Astro.props;
+---
+<div class="compare-wrap">
+  <table>
+    <thead><tr><th>Product</th><th>Best For</th><th>Price</th><th>Rating</th><th></th></tr></thead>
+    <tbody>
+      {products.map((p) => (
+        <tr>
+          <td><strong>{p.name}</strong></td>
+          <td>{p.bestFor ?? '—'}</td>
+          <td>{p.price ?? '—'}</td>
+          <td><Stars rating={p.rating} /></td>
+          <td><a class="btn" href={p.link} rel="sponsored nofollow noopener" target="_blank">View</a></td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>

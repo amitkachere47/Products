@@ -1,0 +1,52 @@
+---
+import { SITE, CATEGORIES, NAV } from '../site.config';
+const year = new Date().getFullYear();
+---
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <strong>{SITE.name}</strong>
+        <p>{SITE.tagline}</p>
+      </div>
+      <div>
+        <strong>Topics</strong>
+        <ul>{NAV.map((s) => <li><a href={`/${s}/`}>{CATEGORIES[s].name}</a></li>)}</ul>
+      </div>
+      <div>
+        <strong>More</strong>
+        <ul>
+          <li><a href="/compare/">Comparisons</a></li>
+          <li><a href="/deals/">Deals</a></li>
+          <li><a href="/gifts/">Gift Guides</a></li>
+          <li><a href="/stories/">Health Stories</a></li>
+          <li><a href="/free-guide/">Free Guide</a></li>
+        </ul>
+      </div>
+      <div>
+        <strong>About</strong>
+        <ul>
+          <li><a href="/about/">About Us</a></li>
+          <li><a href="/team/">Our Team</a></li>
+          <li><a href="/medical-review-board/">Medical Review Board</a></li>
+          <li><a href="/editorial-policy/">Editorial Policy</a></li>
+          <li><a href="/how-we-review/">How We Review</a></li>
+          <li><a href="/contact/">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <strong>Legal</strong>
+        <ul>
+          <li><a href="/affiliate-disclosure/">Affiliate Disclosure</a></li>
+          <li><a href="/medical-disclaimer/">Medical Disclaimer</a></li>
+          <li><a href="/privacy-policy/">Privacy Policy</a></li>
+          <li><a href="/terms/">Terms of Use</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer-note">
+      © {year} HealthStoryMedia.com. Content is for informational purposes only and is not medical advice.
+      Always consult a qualified healthcare provider. We may earn a commission from links on this site.
+    </p>
+  </div>
+</footer>

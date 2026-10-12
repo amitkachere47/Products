@@ -1,0 +1,18 @@
+---
+import { SITE } from '../site.config';
+interface Props { heading?: string; text?: string }
+const {
+  heading = 'Get our free guide: Sleep Better in 7 Nights',
+  text = 'Plus one practical health tip and our honest product picks every week. No spam.',
+} = Astro.props;
+---
+{SITE.newsletterAction && (
+  <section class="newsletter">
+    <h2 style="margin-top:0">{heading}</h2>
+    <p>{text}</p>
+    <form action={SITE.newsletterAction} method="post" target="_blank">
+      <input type="email" name="fields[email]" placeholder="Your email address" required aria-label="Email" />
+      <button class="btn" type="submit">Send Me the Guide</button>
+    </form>
+  </section>
+)}

@@ -1,0 +1,9 @@
+---
+interface Props { rating?: number }
+const { rating } = Astro.props;
+---
+{rating !== undefined && (
+  <span class="stars" aria-label={`${rating} out of 5`}>
+    {'★'.repeat(Math.round(rating))}{'☆'.repeat(5 - Math.round(rating))} <small>{rating}/5</small>
+  </span>
+)}

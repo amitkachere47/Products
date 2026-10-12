@@ -1,0 +1,20 @@
+---
+import Stars from './Stars.astro';
+interface Props {
+  index: number;
+  product: { name: string; summary?: string; bestFor?: string; price?: string; rating?: number; link: string; pros: string[]; cons: string[] };
+}
+const { index, product: p } = Astro.props;
+---
+<section class="product" id={`product-${index}`}>
+  <h3>{index}. {p.name}{p.bestFor && <small> — Best for {p.bestFor}</small>}</h3>
+  <Stars rating={p.rating} />
+  {p.summary && <p>{p.summary}</p>}
+  <div class="proscons">
+    <div><strong>✅ Pros</strong><ul>{p.pros.map((x) => <li>{x}</li>)}</ul></div>
+    <div><strong>⚠️ Cons</strong><ul>{p.cons.map((x) => <li>{x}</li>)}</ul></div>
+  </div>
+  <a class="btn btn-accent" href={p.link} rel="sponsored nofollow noopener" target="_blank">
+    Check Price{p.price ? ` (${p.price})` : ''} →
+  </a>
+</section>

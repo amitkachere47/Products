@@ -1,0 +1,111 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import QuickPick from '../../components/QuickPick.astro';
+import ProductTable from '../../components/ProductTable.astro';
+import ProductReview from '../../components/ProductReview.astro';
+import Faq from '../../components/Faq.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import Newsletter from '../../components/Newsletter.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import { SITE, CATEGORIES, AUTHORS, type CategorySlug } from '../../site.config';
+import { getArticles, formatDate } from '../../lib';
+
+export async function getStaticPaths() {
+  const articles = await getArticles();
+  return articles.map((article) => {
+    const [category, ...rest] = article.id.split('/');
+    return { params: { category, slug: rest.join('/') }, props: { article, all: articles } };
+  });
+}
+
+const { article, all } = Astro.props;
+const d = article.data;
+const { Content } = await render(article);
+const cat = d.category as CategorySlug;
+const author = AUTHORS[d.author] ?? AUTHORS.editorial;
+const reviewer = d.reviewer ? AUTHORS[d.reviewer] : undefined;
+const url = `${SITE.url}/${article.id}/`;
+const related = all.filter((a) => a.data.category === d.category && a.id !== article.id).slice(0, 3);
+
+const schema: Record<string, unknown>[] = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: d.title,
+    description: d.description,
+    datePublished: d.publishDate.toISOString(),
+    dateModified: (d.updatedDate ?? d.publishDate).toISOString(),
+    author: { '@type': 'Person', name: author.name },
+    ...(reviewer && { reviewedBy: { '@type': 'Person', name: reviewer.name } }),
+    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+    mainEntityOfPage: url,
+    ...(d.image && { image: new URL(d.image, SITE.url).href }),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE.url },
+      { '@type': 'ListItem', position: 2, name: CATEGORIES[cat].name, item: `${SITE.url}/${cat}/` },
+      { '@type': 'ListItem', position: 3, name: d.title, item: url },
+    ],
+  },
+];
+if (d.faq.length) {
+  schema.push({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: d.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  });
+}
+---
+<Base title={d.title} description={d.description} image={d.image} type="article" schema={schema}>
+  <article class="container">
+    <div class="read">
+      <nav class="breadcrumbs"><a href="/">Home</a> › <a href={`/${cat}/`}>{CATEGORIES[cat].name}</a></nav>
+      <h1>{d.title}</h1>
+      <p class="byline">
+        By <a href="/team/">{author.name}</a>
+        {reviewer && <> · Medically reviewed by <a href="/medical-review-board/">{reviewer.name}</a></>}
+        · Updated {formatDate(d.updatedDate ?? d.publishDate)}
+      </p>
+      {d.affiliate && (
+        <p class="disclosure">
+          We may earn a commission when you buy through links on this page, at no extra cost to you.
+          This never affects our recommendations. <a href="/affiliate-disclosure/">Learn more</a>.
+        </p>
+      )}
+      {d.image && <img src={d.image} alt={d.imageAlt ?? d.title} loading="eager" />}
+      {d.quickPick && <QuickPick product={d.quickPick} />}
+      {d.products.length > 1 && <ProductTable products={d.products} />}
+      <AdSlot />
+      <Content />
+      {d.products.length > 0 && (
+        <>
+          <h2>Our Picks, Reviewed</h2>
+          {d.products.map((p, i) => <ProductReview index={i + 1} product={p} />)}
+        </>
+      )}
+      <AdSlot />
+      {d.faq.length > 0 && <Faq items={d.faq} />}
+      {d.sources.length > 0 && (
+        <section class="sources">
+          <h2>Sources</h2>
+          <ol>{d.sources.map((s) => <li><a href={s.url} rel="noopener" target="_blank">{s.title}</a></li>)}</ol>
+        </section>
+      )}
+      <p class="medical-note">
+        This article is for informational purposes only and is not a substitute for professional medical advice.
+        Always talk to your doctor before starting a new treatment or supplement. <a href="/medical-disclaimer/">Medical disclaimer</a>.
+      </p>
+      <Newsletter />
+    </div>
+    {related.length > 0 && (
+      <section class="section">
+        <h2>Related Articles</h2>
+        <div class="cards">{related.map((a) => <ArticleCard article={a} />)}</div>
+      </section>
+    )}
+  </article>
+</Base>

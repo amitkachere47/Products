@@ -1,0 +1,40 @@
+---
+import Base from '../../layouts/Base.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import Newsletter from '../../components/Newsletter.astro';
+import { CATEGORIES, type CategorySlug } from '../../site.config';
+import { getArticles } from '../../lib';
+
+export function getStaticPaths() {
+  return Object.keys(CATEGORIES).map((category) => ({ params: { category } }));
+}
+
+const category = Astro.params.category as CategorySlug;
+const info = CATEGORIES[category];
+const articles = (await getArticles()).filter((a) => a.data.category === category);
+const featured = articles.filter((a) => a.data.featured);
+const rest = articles.filter((a) => !a.data.featured);
+---
+<Base title={`${info.name}: Guides, Reviews & Tips`} description={info.blurb}>
+  <section class="hero">
+    <div class="container">
+      <h1>{info.name}</h1>
+      <p>{info.blurb}</p>
+    </div>
+  </section>
+  <div class="container section">
+    {featured.length > 0 && (
+      <>
+        <h2>Start Here</h2>
+        <div class="cards">{featured.map((a) => <ArticleCard article={a} />)}</div>
+      </>
+    )}
+    <h2>All {info.name} Articles</h2>
+    {rest.length > 0 ? (
+      <div class="cards">{rest.map((a) => <ArticleCard article={a} />)}</div>
+    ) : featured.length === 0 ? (
+      <p>New guides are coming soon. <a href="/">Browse the latest articles</a>.</p>
+    ) : null}
+    <Newsletter />
+  </div>
+</Base>

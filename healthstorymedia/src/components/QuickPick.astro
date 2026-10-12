@@ -1,0 +1,17 @@
+---
+import Stars from './Stars.astro';
+interface Props {
+  product: { name: string; summary?: string; bestFor?: string; price?: string; rating?: number; link: string; pros: string[] };
+}
+const { product } = Astro.props;
+---
+<aside class="quick-pick">
+  <span class="label">Our Top Pick</span>
+  <h3>{product.name}</h3>
+  <Stars rating={product.rating} />
+  {product.summary && <p>{product.summary}</p>}
+  {product.pros.length > 0 && <ul>{product.pros.slice(0, 3).map((p) => <li>{p}</li>)}</ul>}
+  <a class="btn btn-accent" href={product.link} rel="sponsored nofollow noopener" target="_blank">
+    Check Price{product.price ? ` (${product.price})` : ''} →
+  </a>
+</aside>
